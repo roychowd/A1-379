@@ -6,6 +6,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
+#include <stdbool.h>
 
 struct jobInfo
 {
@@ -18,6 +20,10 @@ void err_sys(const char *x);
 char **grabArgumentsWithoutRun(char *line);
 void list_all_jobs();
 void run_pgm(char **args, struct jobInfo *job);
+int grabIndex(char *line);
+void suspendjob(struct jobInfo *job);
+void resumejob(struct jobInfo *job);
+void terminateJob(struct jobInfo *job);
 void recordTimes()
 {
     struct tms t;
@@ -50,7 +56,7 @@ int main()
      * each job is essentially represented as a  struct
      * so i need to malloc it as a struct
      */
-    struct jobInfo **jobArray = malloc(32 * sizeof(struct jobInfo *));
+    struct jobInfo **jobArray = calloc(32, sizeof(struct jobInfo *));
     int jobIndex = 0;
 
     /* obtain current limit */
@@ -81,15 +87,13 @@ int main()
         printf("a1jobs[%d]: ", parentPid);
         // grabUserCMD(&length, line);
         getline(&line, &buffer, stdin);
-        printf("%s", line);
-        //printf("First argument: %s, second argument: %s", arguments[0], arguments[1]);
         int idx = 0;
 
         if (strcmp(line, "quit\n") == 0)
         {
             break;
         }
-        if (strstr(line, "run") != NULL)
+        else if (strstr(line, "run") != NULL)
         {
             arguments = grabArgumentsWithoutRun(line);
 
@@ -104,17 +108,45 @@ int main()
                 //TODO put cmd line inside jobarray[jobindex]
                 jobArray[jobIndex] = malloc(sizeof(struct jobInfo));
                 jobArray[jobIndex]->index = jobIndex;
-                printf("job array index %d", jobArray[jobIndex]->index);
                 run_pgm(arguments, jobArray[jobIndex]);
-                printf("job array pid of child %d\n", jobArray[jobIndex]->pid);
                 jobIndex++;
             }
         }
 
-        // else if (strcmp(arguments[0], "list") == 0)
-        // {
-        //     list_all_jobs();
-        // }
+        else if (strcmp(line, "list\n") == 0)
+        {
+            int i = 0;
+            while (jobArray[i] != NULL)
+            {
+                printf("%d:  (pid=\t%d,  cmd=%s)\n", jobArray[i]->index, jobArray[i]->pid, jobArray[i]->command);
+                i++;
+            }
+        }
+        else if (strstr(line, "suspend"))
+        {
+            int suspendIndex = grabIndex(line);
+            if (jobArray[suspendIndex] != NULL)
+            {
+
+                suspendjob(jobArray[suspendIndex]);
+            }
+        }
+        else if (strstr(line, "resume"))
+        {
+            int resumeIndex = grabIndex(line);
+            if (jobArray[resumeIndex] != NULL)
+            {
+                resumejob(jobArray[resumeIndex]);
+            }
+        }
+        else if (strstr(line, "terminate"))
+        {
+            int terminateIndex = grabIndex(line);
+            if (jobArray[terminateIndex] != NULL)
+            {
+                terminateJob(jobArray[terminateIndex]);
+            }
+        }
     }
 
     free(line);
@@ -132,7 +164,7 @@ void err_sys(const char *x)
 }
 
 /**
- * Function that takes in the line and parses it to grab the arguments
+ * Function that takes in the line with the cmd run and parses it to grab the arguments
  * returns an array of strings (char **)
  * i used this website to help implement it: 
  * 
@@ -175,12 +207,37 @@ char **grabArgumentsWithoutRun(char *line)
 /**
  * Function that executes if the person types a command that uses list
  */
-void list_all_jobs()
+int grabIndex(char *line)
 {
-    //ANCHOR LIST
-    printf("LISTING ALL JOBS\n");
+    int index;
+    bool isIndex = true;
+    line = strtok(line, " \n");
+    while (isIndex)
+    {
+        char *s = strtok(NULL, " \n");
+        index = atoi(s);
+        isIndex = false;
+    }
+    return index;
 }
 
+void suspendjob(struct jobInfo *job)
+{
+    kill(job->pid, SIGSTOP);
+    return;
+}
+
+void resumejob(struct jobInfo *job)
+{
+    printf("%d", job->pid);
+    kill(job->pid, SIGCONT);
+    return;
+}
+
+void terminateJob(struct jobInfo *job)
+{
+    kill(job->pid, SIGKILL);
+}
 /**
  * function that executes when the user enters run pgm arg1 ... arg4
  * requries all the arguments
@@ -189,7 +246,6 @@ void list_all_jobs()
 void run_pgm(char **args, struct jobInfo *job)
 {
     //ANCHOR Run Program
-    printf("entering run prgm\n");
     pid_t pid;
     int ret = 1;
     int status = 0;
@@ -198,13 +254,11 @@ void run_pgm(char **args, struct jobInfo *job)
 
     if (pid < 0)
     {
-        printf("failed forked");
         err_sys("failed forked");
     }
     else if (pid == 0)
     {
         /* code */
-        printf("%d", getpid());
         if (execvp(args[0], args) < 0)
         {
             err_sys("Execvp error");
@@ -217,7 +271,14 @@ void run_pgm(char **args, struct jobInfo *job)
         // so i need to put htis inside a struct with an int representing the index
         // actually nvm i can implement that later
         job->pid = pid;
-        printf("the pid of the child is %d\n", pid);
-        // printf("parent process, pid = %u\n", getpid());
+        job->command = malloc(500 * sizeof(char));
+        int x = 1;
+        strcpy(job->command, args[0]);
+        while (args[x] != NULL)
+        {
+            strcat(job->command, " ");
+            strcat(job->command, args[x]);
+            x++;
+        }
     }
 }
