@@ -14,6 +14,7 @@ struct jobInfo
     char *command;
     int index;
     int pid;
+    bool isKilled;
 };
 
 void err_sys(const char *x);
@@ -24,31 +25,39 @@ int grabIndex(char *line);
 void suspendjob(struct jobInfo *job);
 void resumejob(struct jobInfo *job);
 void terminateJob(struct jobInfo *job);
-void recordTimes()
-{
-    struct tms t;
-    clock_t userCPUTime, systemCPUTime;
-    //. Call function times() (see the table above) to record the user and CPU times for the current process
-    //(and its terminated children).
-    if (times(&t) == -1)
-    {
-        err_sys("times error");
-    }
-    printf(" times() yields: user CPU=%.2f; system CPU: %.2f\n", (double)t.tms_utime,
-           (double)t.tms_stime);
-    userCPUTime = t.tms_utime;
-    systemCPUTime = t.tms_stime;
-}
+void pr_times(clock_t realTime, struct tms *start, struct tms *end);
+
+// void recordTimes()
+// {
+//     struct tms start, end;
+//     clock_t userCPUTime, systemCPUTime;
+//     //. Call function times() (see the table above) to record the user and CPU times for the current process
+//     //(and its terminated children).
+//     if (times(&start) == -1)
+//     {
+//         err_sys("times error");
+//     }
+//     printf(" times() yields: user CPU=%.2f; system CPU: %.2f\n", (double)start.tms_utime,
+//            (double)start.tms_stime);
+//     userCPUTime = start.tms_utime;
+//     systemCPUTime = start.tms_stime;
+// }
 
 int main()
 {
     // ANCHOR MAIN
     /* code */
     struct rlimit rlim;
+
+    // following is from APUE [SR 3/E]
+    struct tms tmsStart, tmsEnd;
+    clock_t start, end;
+    // End from APUE
+
     int parentPid;
     size_t buffer = 0;
-    // char *line = malloc(length * sizeof(char));
-    // char *copyString, *pch;
+
+    // initialize a char pointer and a array of pointers to strings
     char *line = NULL;
     char **arguments = NULL;
 
@@ -56,6 +65,8 @@ int main()
      * each job is essentially represented as a  struct
      * so i need to malloc it as a struct
      */
+
+    // initialaize a jobarray thats a array of struct objects
     struct jobInfo **jobArray = calloc(32, sizeof(struct jobInfo *));
     int jobIndex = 0;
 
@@ -66,6 +77,7 @@ int main()
     }
 
     /* set cpu limit of 10 minutes (1 * 60 * 10)  = 600 seconds */
+
     // need to learn how to implement this!
     rlim.rlim_cur = 600;
     if (setrlimit(RLIMIT_CPU, &rlim) < 0)
@@ -75,7 +87,10 @@ int main()
 
     // need to somehow record times
     // need to learn how to implement this
-    recordTimes();
+    // recordTimes();
+    if ((start = times(&tmsStart)) == -1)
+        err_sys("times error");
+
     // grab parent id
     parentPid = getpid();
 
@@ -87,7 +102,7 @@ int main()
         printf("a1jobs[%d]: ", parentPid);
         // grabUserCMD(&length, line);
         getline(&line, &buffer, stdin);
-        int idx = 0;
+        // int idx = 0;
 
         if (strcmp(line, "quit\n") == 0)
         {
@@ -99,13 +114,6 @@ int main()
 
             if (jobIndex < 32)
             {
-                /**
-                * parameters to send this function - will delete this later when i go back to refactor
-                * nothing really all i need to do is return a pointer to a struct object allocted in memory!!!!!;
-                *
-                */
-
-                //TODO put cmd line inside jobarray[jobindex]
                 jobArray[jobIndex] = malloc(sizeof(struct jobInfo));
                 jobArray[jobIndex]->index = jobIndex;
                 run_pgm(arguments, jobArray[jobIndex]);
@@ -147,7 +155,30 @@ int main()
                 terminateJob(jobArray[terminateIndex]);
             }
         }
+        else if (strcmp(line, "exit\n") == 0)
+        {
+            int k = 0;
+            while ((jobArray[k] != NULL))
+            {
+                if (jobArray[k]->isKilled == false)
+                {
+                    terminateJob(jobArray[k]);
+                }
+
+                k++;
+            }
+            break;
+        }
     }
+
+    if ((end = times(&tmsEnd)) == -1)
+    {
+        err_sys("times error");
+    }
+
+    // implementing APUE code;
+
+    pr_times(end - start, &tmsStart, &tmsEnd);
 
     free(line);
     free(jobArray);
@@ -205,6 +236,29 @@ char **grabArgumentsWithoutRun(char *line)
 }
 
 /**
+ * The following function is from APUE 3/E 
+ * Used to print times of processes 
+ */
+void pr_times(clock_t realTime, struct tms *start, struct tms *end)
+{
+    static long clockTick = 0;
+    if (clockTick == 0)
+    {
+        // we will fetch clock ticks per second first time
+        if ((clockTick = sysconf(_SC_CLK_TCK)) < 0)
+        {
+
+            err_sys("sysconf error");
+        }
+    }
+
+    printf("\treal:\t%7.2f\n", realTime / (double)clockTick);
+    printf("\tuser:\t%7.2f\n", (end->tms_utime - start->tms_utime) / (double)clockTick);
+    printf("\tsys:\t%7.2f\n", (end->tms_stime - start->tms_stime) / (double)clockTick);
+    printf("\tchild user:\t%7.2f\n", (end->tms_cutime - start->tms_cutime) / (double)clockTick);
+    printf("\tchild sys:\t%7.2f\n", (end->tms_cstime - start->tms_cstime) / (double)clockTick);
+}
+/**
  * Function that executes if the person types a command that uses list
  */
 int grabIndex(char *line)
@@ -212,10 +266,19 @@ int grabIndex(char *line)
     int index;
     bool isIndex = true;
     line = strtok(line, " \n");
+
+    char *s;
     while (isIndex)
     {
-        char *s = strtok(NULL, " \n");
-        index = atoi(s);
+        if ((s = strtok(NULL, " \n")) != NULL)
+        {
+            index = atoi(s);
+        }
+
+        else
+        {
+            printf("idk");
+        }
         isIndex = false;
     }
     return index;
@@ -229,7 +292,7 @@ void suspendjob(struct jobInfo *job)
 
 void resumejob(struct jobInfo *job)
 {
-    printf("%d", job->pid);
+
     kill(job->pid, SIGCONT);
     return;
 }
@@ -237,6 +300,8 @@ void resumejob(struct jobInfo *job)
 void terminateJob(struct jobInfo *job)
 {
     kill(job->pid, SIGKILL);
+    job->isKilled = true;
+    printf("\t\tjob %d terminated\n", job->pid);
 }
 /**
  * function that executes when the user enters run pgm arg1 ... arg4
@@ -247,9 +312,6 @@ void run_pgm(char **args, struct jobInfo *job)
 {
     //ANCHOR Run Program
     pid_t pid;
-    int ret = 1;
-    int status = 0;
-    int argIndex = 1;
     pid = fork();
 
     if (pid < 0)
@@ -271,6 +333,7 @@ void run_pgm(char **args, struct jobInfo *job)
         // so i need to put htis inside a struct with an int representing the index
         // actually nvm i can implement that later
         job->pid = pid;
+        job->isKilled = false;
         job->command = malloc(500 * sizeof(char));
         int x = 1;
         strcpy(job->command, args[0]);
