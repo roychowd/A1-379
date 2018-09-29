@@ -1,4 +1,6 @@
 #include <iostream>
+#include <cstring>
+#include <cstdlib>
 extern "C"
 {
 #include <stdio.h>
