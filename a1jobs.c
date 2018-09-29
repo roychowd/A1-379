@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/times.h>
