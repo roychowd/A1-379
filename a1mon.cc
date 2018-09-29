@@ -54,7 +54,7 @@ int main(int argc, char const *argv[])
         {
             if (strstr(line, targetPID))
             {
-                print("true");
+                printf("true");
             }
             if (fputs(line, stdout) == EOF)
             {
