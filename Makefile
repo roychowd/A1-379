@@ -4,3 +4,4 @@ a1jobs:
 clean:
 	rm a1jobs
 	rm -rf a1jobs.dSYM
+	
