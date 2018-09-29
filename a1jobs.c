@@ -252,11 +252,11 @@ void pr_times(clock_t realTime, struct tms *start, struct tms *end)
         }
     }
 
-    printf("\treal:\t%7.2f\n", realTime / (double)clockTick);
-    printf("\tuser:\t%7.2f\n", (end->tms_utime - start->tms_utime) / (double)clockTick);
-    printf("\tsys:\t%7.2f\n", (end->tms_stime - start->tms_stime) / (double)clockTick);
-    printf("\tchild user:\t%7.2f\n", (end->tms_cutime - start->tms_cutime) / (double)clockTick);
-    printf("\tchild sys:\t%7.2f\n", (end->tms_cstime - start->tms_cstime) / (double)clockTick);
+    printf("real:\t%7.2f\n", realTime / (double)clockTick);
+    printf("user:\t%7.2f\n", (end->tms_utime - start->tms_utime) / (double)clockTick);
+    printf("sys:\t%7.2f\n", (end->tms_stime - start->tms_stime) / (double)clockTick);
+    printf("child user:\t%7.2f\n", (end->tms_cutime - start->tms_cutime) / (double)clockTick);
+    printf("child sys:\t%7.2f\n", (end->tms_cstime - start->tms_cstime) / (double)clockTick);
 }
 /**
  * Function that executes if the person types a command that uses list
