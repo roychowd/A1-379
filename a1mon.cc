@@ -50,6 +50,10 @@ int main(int argc, char const *argv[])
         }
         while (fgets(line, MAXLINE, fpInput))
         {
+            if (strstr(line, targetPID))
+            {
+                print("true");
+            }
             if (fputs(line, stdout) == EOF)
             {
                 err_sys("error in fputs");
