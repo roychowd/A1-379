@@ -64,6 +64,8 @@ int main(int argc, char const *argv[])
             err_sys("pclose error");
         }
         counter++;
+	std::cout << "List of monitored processes:" << endl;
+	std::cout << "[0:[]]" << endl;
         sleep(seconds);
     }
 
