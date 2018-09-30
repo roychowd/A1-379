@@ -12,8 +12,14 @@ extern "C"
 #include <sys/resource.h>
 }
 using namespace std;
-
 #define MAXLINE 5000
+
+struct childInfo
+{
+    char *command;
+    int pid;
+    int ppid;
+};
 
 void err_sys(const char *x);
 void setLimit();
@@ -30,7 +36,7 @@ int main(int argc, char const *argv[])
     int counter = 0;
     int seconds;
     char *targetPID;
-    std::map<int, std::string> children_map;
+    // struct childInfo **childProcessArray = calloc(32, sizeof(struct childInfo *));
 
     if (argc < 2 || argc > 3)
     {
@@ -50,15 +56,15 @@ int main(int argc, char const *argv[])
 
     // children_map = grabProcessChildren(targetPID);
     getChilds(targetPID);
-    for (; counter > 3;)
-    {
-        displayInformation(counter, targetPID, seconds);
+    // for (;;)
+    // {
+    //     displayInformation(counter, targetPID, seconds);
 
-        counter++;
-        // std::cout << "List of monitored processes:" << endl;
-        // std::cout << "[0:[]]" << endl;
-        sleep(seconds);
-    }
+    //     counter++;
+    //     // std::cout << "List of monitored processes:" << endl;
+    //     // std::cout << "[0:[]]" << endl;
+    //     sleep(seconds);
+    // }
 
     return 0;
 }
@@ -69,19 +75,31 @@ void err_sys(const char *x)
     exit(1);
 }
 
-void getChilds(char *targetPID)
+void getChilds(char *targetPID, struct childInfo **childProcessArray)
 {
     char line[MAXLINE];
-    FILE *children;
-    char *psCommand = "ps -o pid,cmd --ppid ";
+    char psCommand[MAXLINE];
+    strcpy(psCommand, "ps -o pid,cmd,ppid --ppid ");
     strcat(psCommand, targetPID);
+    int index = 0;
+
+    FILE *children;
+
     if ((children = popen(psCommand, "r")) == NULL)
     {
         err_sys("popen error");
     }
     while (fgets(line, sizeof(line), children))
     {
-        std::cout << line << endl;
+
+        printf("%s", line);
+        if (strstr(line, targetPID))
+        {
+            // char *oneArg = strdup(line);
+            // strtok(oneArg, " ");
+            std::string aString = std::string(line);
+            std::cout << aString;
+        }
     }
 }
 

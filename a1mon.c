@@ -8,10 +8,17 @@
 
 #define MAXLINE 5000
 
+struct childInfo
+{
+    char *command;
+    int pid;
+    int ppid;
+};
+
 void err_sys(const char *x);
 void setLimit();
 void displayInformation(int counter, char *targetPID, int seconds);
-void getChilds(char *targetPID);
+void getChilds(char *targetPID, struct childInfo **childProcessArray);
 
 int main(int argc, char const *argv[])
 {
@@ -23,6 +30,7 @@ int main(int argc, char const *argv[])
     int counter = 0;
     int seconds;
     char *targetPID;
+    struct childInfo **childProcessArray = calloc(32, sizeof(struct childInfo *));
 
     if (argc < 2 || argc > 3)
     {
@@ -41,7 +49,7 @@ int main(int argc, char const *argv[])
     setLimit();
 
     // children_map = grabProcessChildren(targetPID);
-    getChilds(targetPID);
+    getChilds(targetPID, childProcessArray);
     // for (;;)
     // {
     //     displayInformation(counter, targetPID, seconds);
@@ -61,12 +69,13 @@ void err_sys(const char *x)
     exit(1);
 }
 
-void getChilds(char *targetPID)
+void getChilds(char *targetPID, struct childInfo **childProcessArray)
 {
     char line[MAXLINE];
     char psCommand[MAXLINE];
     strcpy(psCommand, "ps -o pid,cmd,ppid --ppid ");
     strcat(psCommand, targetPID);
+    int index = 0;
 
     FILE *children;
 
@@ -76,10 +85,13 @@ void getChilds(char *targetPID)
     }
     while (fgets(line, sizeof(line), children))
     {
-        
-	printf("%s", line);
-	if (strstr(line, targetPID))
+
+        printf("%s", line);
+        if (strstr(line, targetPID))
         {
+            char *oneArg = strdup(line);
+            strtok(oneArg, " ");
+
             printf("the line with the ppid child is %s", line);
         }
     }
