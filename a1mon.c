@@ -76,7 +76,10 @@ void getChilds(char *targetPID)
     }
     while (fgets(line, sizeof(line), children))
     {
-        printf("%s\n", line);
+        if (strstr(line, targetPID))
+        {
+            printf("the line with the ppid child is %s", line);
+        }
     }
 }
 
