@@ -43,7 +43,8 @@ int main(int argc, char const *argv[])
     }
     setLimit();
 
-    for (int counter = 0; counter < 1; counter++)
+    int counter = 0;
+    for (;;)
     {
         printf("a1mon [counter= %d, pid= %d, target_pid= %s, interval= %d sec]\n", counter, getpid(), targetPID, seconds);
         if ((fpInput = popen("ps -u $USER -o user,pid,ppid,state,start,cmd --sort start", "r")) == NULL)
@@ -52,10 +53,7 @@ int main(int argc, char const *argv[])
         }
         while (fgets(line, MAXLINE, fpInput))
         {
-            if (strstr(line, targetPID))
-            {
-                printf("true");
-            }
+            
             if (fputs(line, stdout) == EOF)
             {
                 err_sys("error in fputs");
@@ -65,6 +63,8 @@ int main(int argc, char const *argv[])
         {
             err_sys("pclose error");
         }
+        counter++;
+        sleep(seconds);
     }
 
     return 0;
