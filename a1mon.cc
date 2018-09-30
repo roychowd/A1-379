@@ -14,6 +14,7 @@ using namespace std;
 #define MAXLINE 5000
 void err_sys(const char *x);
 void setLimit();
+void displayInformation(int counter, char *targetPID, int seconds);
 
 int main(int argc, char const *argv[])
 {
@@ -25,8 +26,6 @@ int main(int argc, char const *argv[])
 
     int seconds;
     char *targetPID;
-    char line[MAXLINE];
-    FILE *fpInput, *fpOutput;
     if (argc < 2 || argc > 3)
     {
         err_sys("Incorrect number of arguments");
@@ -46,26 +45,11 @@ int main(int argc, char const *argv[])
     int counter = 0;
     for (;;)
     {
-        printf("a1mon [counter= %d, pid= %d, target_pid= %s, interval= %d sec]\n", counter, getpid(), targetPID, seconds);
-        if ((fpInput = popen("ps -u $USER -o user,pid,ppid,state,start,cmd --sort start", "r")) == NULL)
-        {
-            err_sys("popen error");
-        }
-        while (fgets(line, MAXLINE, fpInput))
-        {
-            
-            if (fputs(line, stdout) == EOF)
-            {
-                err_sys("error in fputs");
-            }
-        }
-        if (pclose(fpInput) < 0)
-        {
-            err_sys("pclose error");
-        }
+        displayInformation(counter, targetPID, seconds);
+
         counter++;
-	std::cout << "List of monitored processes:" << endl;
-	std::cout << "[0:[]]" << endl;
+        std::cout << "List of monitored processes:" << endl;
+        std::cout << "[0:[]]" << endl;
         sleep(seconds);
     }
 
@@ -87,4 +71,29 @@ void setLimit()
     {
         err_sys("set limit error");
     }
+}
+
+void displayInformation(int counter, char *targetPID, int seconds)
+{
+    char line[MAXLINE];
+    FILE *fpInput;
+    printf("a1mon [counter= %d, pid= %d, target_pid= %s, interval= %d sec]\n", counter, getpid(), targetPID, seconds);
+    if ((fpInput = popen("ps -u $USER -o user,pid,ppid,state,start,cmd --sort start", "r")) == NULL)
+    {
+        err_sys("popen error");
+    }
+    while (fgets(line, MAXLINE, fpInput))
+    {
+
+        if (fputs(line, stdout) == EOF)
+        {
+            err_sys("error in fputs");
+        }
+    }
+    if (pclose(fpInput) < 0)
+    {
+        err_sys("pclose error");
+    }
+
+    return;
 }
