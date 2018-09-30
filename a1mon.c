@@ -1,17 +1,10 @@
-#include <iostream>
-#include <cstring>
-#include <cstdlib>
-#include <string>
-#include <map>
-extern "C"
-{
+#include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-}
-using namespace std;
 
 #define MAXLINE 5000
 
@@ -30,7 +23,6 @@ int main(int argc, char const *argv[])
     int counter = 0;
     int seconds;
     char *targetPID;
-    std::map<int, std::string> children_map;
 
     if (argc < 2 || argc > 3)
     {
@@ -50,15 +42,15 @@ int main(int argc, char const *argv[])
 
     // children_map = grabProcessChildren(targetPID);
     getChilds(targetPID);
-    for (; counter > 3;)
-    {
-        displayInformation(counter, targetPID, seconds);
+    // for (;;)
+    // {
+    //     displayInformation(counter, targetPID, seconds);
 
-        counter++;
-        // std::cout << "List of monitored processes:" << endl;
-        // std::cout << "[0:[]]" << endl;
-        sleep(seconds);
-    }
+    //     counter++;
+    //     // std::cout << "List of monitored processes:" << endl;
+    //     // std::cout << "[0:[]]" << endl;
+    //     sleep(seconds);
+    // }
 
     return 0;
 }
@@ -72,16 +64,19 @@ void err_sys(const char *x)
 void getChilds(char *targetPID)
 {
     char line[MAXLINE];
-    FILE *children;
-    char *psCommand = "ps -o pid,cmd --ppid ";
+    char psCommand[MAXLINE];
+    strcpy(psCommand, "ps -o pid,cmd --ppid ");
     strcat(psCommand, targetPID);
+
+    FILE *children;
+
     if ((children = popen(psCommand, "r")) == NULL)
     {
         err_sys("popen error");
     }
     while (fgets(line, sizeof(line), children))
     {
-        std::cout << line << endl;
+        printf("%s\n", line);
     }
 }
 
