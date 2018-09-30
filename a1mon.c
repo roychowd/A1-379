@@ -65,7 +65,7 @@ void getChilds(char *targetPID)
 {
     char line[MAXLINE];
     char psCommand[MAXLINE];
-    strcpy(psCommand, "ps -o pid,cmd --ppid ");
+    strcpy(psCommand, "ps -o pid,cmd,ppid --ppid ");
     strcat(psCommand, targetPID);
 
     FILE *children;
@@ -76,7 +76,9 @@ void getChilds(char *targetPID)
     }
     while (fgets(line, sizeof(line), children))
     {
-        if (strstr(line, targetPID))
+        
+	printf("%s", line);
+	if (strstr(line, targetPID))
         {
             printf("the line with the ppid child is %s", line);
         }
