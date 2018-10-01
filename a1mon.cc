@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 #include <cstring>
 #include <cstdlib>
 #include <string>
@@ -55,16 +56,16 @@ int main(int argc, char const *argv[])
     setLimit();
 
     // children_map = grabProcessChildren(targetPID);
-    getChilds(targetPID);
-    // for (;;)
-    // {
-    //     displayInformation(counter, targetPID, seconds);
-    //  
-    //     counter++;
-    //     // std::cout << "List of monitored processes:" << endl;
-    //     // std::cout << "[0:[]]" << endl;
-    //     sleep(seconds);
-    // }
+   // getChilds(targetPID);
+    for (;;)
+    {
+        displayInformation(counter, targetPID, seconds);
+     
+        counter++;
+        // std::cout << "List of monitored processes:" << endl;
+        // std::cout << "[0:[]]" << endl;
+        sleep(seconds);
+    }
 
     return 0;
 }
@@ -91,14 +92,17 @@ void getChilds(char *targetPID)
     }
     while (fgets(line, sizeof(line), children))
     {
-
-        printf("%s", line);
         if (strstr(line, targetPID))
         {
             // char *oneArg = strdup(line);
             // strtok(oneArg, " ");
             std::string aString = std::string(line);
             std::cout << aString;
+            char * token = strtok(line, " ");
+            while (token != NULL ) {
+                std::cout << token << endl;
+                token=strtok(NULL, " "); 
+            }
         }
     }
 }
@@ -126,10 +130,14 @@ void displayInformation(int counter, char *targetPID, int seconds)
     while (fgets(line, MAXLINE, fpInput))
     {
 
-        if (fputs(line, stdout) == EOF)
-        {
-            err_sys("error in fputs");
-        }
+        // if (fputs(line, stdout) == EOF)
+        // {
+        //     err_sys("error in fputs");
+        // }
+        std::string tPid(targetPID);
+        std::string lineString(line);
+        std::cout << tPid;
+        
     }
     if (pclose(fpInput) < 0)
     {
