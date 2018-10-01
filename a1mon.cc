@@ -117,11 +117,13 @@ void setLimit()
         err_sys("set limit error");
     }
 }
+typedef vector< tuple<string, string, string> > childtuple;
 
 void displayInformation(int counter, char *targetPID, int seconds)
 {
     char line[MAXLINE];
     FILE *fpInput;
+    childtuple t1; 
     printf("a1mon [counter= %d, pid= %d, target_pid= %s, interval= %d sec]\n", counter, getpid(), targetPID, seconds);
     if ((fpInput = popen("ps -u $USER -o user,pid,ppid,state,start,cmd --sort start", "r")) == NULL)
     {
@@ -134,9 +136,24 @@ void displayInformation(int counter, char *targetPID, int seconds)
         // {
         //     err_sys("error in fputs");
         // }
+        int pidPosition = 0;
         std::string tPid(targetPID);
         std::string lineString(line);
-        std::cout << tPid;
+
+
+        char *token = strtok(line, " ");
+        while (token != NULL) {
+            // std::cout << token << endl;
+            pidPosition++;
+            token = strtok(NULL, " ");
+            if (pidPosition == 1) {
+                if (strcmp(targetPID, token) == 0) {
+                    std::cout << token << endl;
+
+                }
+                
+            }
+        }
         
     }
     if (pclose(fpInput) < 0)
