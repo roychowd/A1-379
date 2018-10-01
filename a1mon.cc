@@ -21,11 +21,12 @@ struct childInfo
     int pid;
     int ppid;
 };
+//typedef vector< tuple<string, string, string> > childtuple;
 
 void err_sys(const char *x);
 void setLimit();
 void displayInformation(int counter, char *targetPID, int seconds);
-void getChilds(char *targetPID);
+void getChilds(char *targetPID, char *line);
 
 int main(int argc, char const *argv[])
 {
@@ -76,35 +77,38 @@ void err_sys(const char *x)
     exit(1);
 }
 
-void getChilds(char *targetPID)
+void getChilds(char *targetPID, char * line)
 {
-    char line[MAXLINE];
-    char psCommand[MAXLINE];
-    strcpy(psCommand, "ps -o pid,cmd,ppid --ppid ");
-    strcat(psCommand, targetPID);
-    int index = 0;
+    
+    std::cout << "CALLED GETCHILDS";
+    return;
+    // char line[MAXLINE];
+    // char psCommand[MAXLINE];
+    // strcpy(psCommand, "ps -o pid,cmd,ppid --ppid ");
+    // strcat(psCommand, targetPID);
+    // int index = 0;
 
-    FILE *children;
+    // FILE *children;
 
-    if ((children = popen(psCommand, "r")) == NULL)
-    {
-        err_sys("popen error");
-    }
-    while (fgets(line, sizeof(line), children))
-    {
-        if (strstr(line, targetPID))
-        {
-            // char *oneArg = strdup(line);
-            // strtok(oneArg, " ");
-            std::string aString = std::string(line);
-            std::cout << aString;
-            char * token = strtok(line, " ");
-            while (token != NULL ) {
-                std::cout << token << endl;
-                token=strtok(NULL, " "); 
-            }
-        }
-    }
+    // if ((children = popen(psCommand, "r")) == NULL)
+    // {
+    //     err_sys("popen error");
+    // }
+    // while (fgets(line, sizeof(line), children))
+    // {
+    //     if (strstr(line, targetPID))
+    //     {
+    //         // char *oneArg = strdup(line);
+    //         // strtok(oneArg, " ");
+    //         std::string aString = std::string(line);
+    //         std::cout << aString;
+    //         char * token = strtok(line, " ");
+    //         while (token != NULL ) {
+    //             std::cout << token << endl;
+    //             token=strtok(NULL, " "); 
+    //         }
+    //     }
+    // }
 }
 
 void setLimit()
@@ -117,13 +121,13 @@ void setLimit()
         err_sys("set limit error");
     }
 }
-typedef vector< tuple<string, string, string> > childtuple;
+
 
 void displayInformation(int counter, char *targetPID, int seconds)
 {
     char line[MAXLINE];
     FILE *fpInput;
-    childtuple t1; 
+    // childtuple t1; 
     printf("a1mon [counter= %d, pid= %d, target_pid= %s, interval= %d sec]\n", counter, getpid(), targetPID, seconds);
     if ((fpInput = popen("ps -u $USER -o user,pid,ppid,state,start,cmd --sort start", "r")) == NULL)
     {
@@ -136,24 +140,28 @@ void displayInformation(int counter, char *targetPID, int seconds)
         // {
         //     err_sys("error in fputs");
         // }
-        int pidPosition = 0;
-        std::string tPid(targetPID);
+        //int pidPosition = 0;
+        //std::string tPid(targetPID);
         std::string lineString(line);
+        std::cout << lineString;
+        // printf("%s", targetPID);
+        char *p = targetPID;
+        getChilds(p, line);
 
 
-        char *token = strtok(line, " ");
-        while (token != NULL) {
-            // std::cout << token << endl;
-            pidPosition++;
-            token = strtok(NULL, " ");
-            if (pidPosition == 1) {
-                if (strcmp(targetPID, token) == 0) {
-                    std::cout << token << endl;
+        // char *token = strtok(line, " ");
+        // while (token != NULL) {
+        //     // std::cout << token << endl;
+        //     pidPosition++;
+        //     token = strtok(NULL, " ");
+        //     if (pidPosition == 1) {
+        //         if (strcmp(targetPID, token) == 0) {
+        //             std::cout << token << endl;
 
-                }
+        //         }
                 
-            }
-        }
+        //     }
+        // }
         
     }
     if (pclose(fpInput) < 0)
