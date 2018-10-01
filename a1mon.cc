@@ -143,11 +143,22 @@ void displayInformation(int counter, char *targetPID, int seconds)
         //int pidPosition = 0;
         //std::string tPid(targetPID);
         std::string lineString(line);
-        std::cout << lineString;
+        // std::cout << lineString;
         // printf("%s", targetPID);
         char *p = targetPID;
-        getChilds(p, line);
 
+        char *token = strtok(line, " ");
+        int position = 0;
+        while (token != NULL) {
+            // parent process
+            if ((position == 1) && (strcmp(token, p) == 0)) {
+                
+                std::cout << token;
+                
+                
+            }
+            
+        } 
 
         // char *token = strtok(line, " ");
         // while (token != NULL) {
