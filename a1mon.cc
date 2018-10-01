@@ -59,7 +59,7 @@ int main(int argc, char const *argv[])
     // for (;;)
     // {
     //     displayInformation(counter, targetPID, seconds);
-
+    //  
     //     counter++;
     //     // std::cout << "List of monitored processes:" << endl;
     //     // std::cout << "[0:[]]" << endl;
@@ -75,7 +75,7 @@ void err_sys(const char *x)
     exit(1);
 }
 
-void getChilds(char *targetPID, struct childInfo **childProcessArray)
+void getChilds(char *targetPID)
 {
     char line[MAXLINE];
     char psCommand[MAXLINE];
