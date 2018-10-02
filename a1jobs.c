@@ -148,7 +148,7 @@ int main()
     }
 }
 
-                kvoid setLimit()
+void setLimit()
 {
     // sets the cpu limit to 10 minutes
     // put this in a header file to share with my other a1jobs
