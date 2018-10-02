@@ -145,13 +145,15 @@ int main()
 
     pr_times(end - start, &tmsStart, &tmsEnd);
 
-    // free(line);
+    free(line);
     int i = 0;
-    while (jobArray[i] != NULL) {
+    while (jobArray[i] != NULL)
+    {
         free(jobArray[i]->command);
         free(jobArray[i]);
         i++;
     }
+    free(arguments);
     free(jobArray);
     return 0;
 }
@@ -265,7 +267,6 @@ void terminateJob(struct jobInfo *job)
     printf("\t\tjob %d terminated\n", job->pid);
 }
 
-
 /**
  * function that executes when the user enters run pgm arg1 ... arg4
  * requries all the arguments
@@ -295,6 +296,7 @@ void run_pgm(char **args, struct jobInfo *job)
         job->pid = pid;
         job->isKilled = false;
         job->command = malloc(500 * sizeof(char));
+        if ()
         int x = 1;
         strcpy(job->command, args[0]);
         while (args[x] != NULL)
@@ -305,7 +307,6 @@ void run_pgm(char **args, struct jobInfo *job)
         }
     }
 }
-
 
 // Function used be the APUE book
 void setLimit()
