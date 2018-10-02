@@ -1,6 +1,7 @@
+#define _BSD_SOURCE
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -8,17 +9,19 @@
 
 #define MAXLINE 5000
 
+static int arrayIndex =0;
 struct childInfo
 {
     char *command;
-    int pid;
-    int ppid;
+    char* pid;
+    char* ppid;
 };
 
+// typedef vector< tuple<string, string, string> 
 void err_sys(const char *x);
 void setLimit();
 void displayInformation(int counter, char *targetPID, int seconds);
-void getChilds(char *targetPID, struct childInfo **childProcessArray);
+void getChilds(char *targetPID, struct childInfo **childarray);
 
 int main(int argc, char const *argv[])
 {
@@ -30,7 +33,7 @@ int main(int argc, char const *argv[])
     int counter = 0;
     int seconds;
     char *targetPID;
-    struct childInfo **childProcessArray = calloc(32, sizeof(struct childInfo *));
+    struct childInfo **childProcessArray =  calloc(32, sizeof(struct childInfo *));
 
     if (argc < 2 || argc > 3)
     {
@@ -47,18 +50,24 @@ int main(int argc, char const *argv[])
         seconds = 3;
     }
     setLimit();
-
-    // children_map = grabProcessChildren(targetPID);
-    getChilds(targetPID, childProcessArray);
-    // for (;;)
-    // {
-    //     displayInformation(counter, targetPID, seconds);
-
-    //     counter++;
-    //     // std::cout << "List of monitored processes:" << endl;
-    //     // std::cout << "[0:[]]" << endl;
-    //     sleep(seconds);
-    // }
+    getChilds(targetPID,childProcessArray);
+    for (;;)
+    {
+        displayInformation(counter, targetPID, seconds);
+        // getChilds(targetPID,childProcessArray);
+        printf("List of Monitored Processes");
+        int x = 0;
+        printf("[");
+        while (childProcessArray[x]!=NULL) {
+            printf("%d:[%s,%s], " , x, childProcessArray[x]->pid, childProcessArray[x]->command);
+            x++;
+        } 
+        printf("]\n");
+        counter++;
+        // std::cout << "List of monitored processes:" << endl;
+        // std::cout << "[0:[]]" << endl;
+        sleep(seconds);
+    }
 
     return 0;
 }
@@ -69,33 +78,46 @@ void err_sys(const char *x)
     exit(1);
 }
 
-void getChilds(char *targetPID, struct childInfo **childProcessArray)
+void getChilds(char *targetPID, struct childInfo **child )
 {
     char line[MAXLINE];
     char psCommand[MAXLINE];
-    strcpy(psCommand, "ps -o pid,cmd,ppid --ppid ");
+    strcpy(psCommand, "ps -o ppid,pid,cmd --ppid ");
     strcat(psCommand, targetPID);
-    int index = 0;
 
     FILE *children;
+    // if (arrayIndex > )
 
     if ((children = popen(psCommand, "r")) == NULL)
     {
         err_sys("popen error");
     }
+    int counter = 0;
     while (fgets(line, sizeof(line), children))
     {
-
-        printf("%s", line);
-        if (strstr(line, targetPID))
-        {
-            char *oneArg = strdup(line);
-            strtok(oneArg, " ");
-
-            printf("the line with the ppid child is %s", line);
+        if (counter >= 1) {
+            char * token = strtok(line, " \n");
+            if (strcmp(token, targetPID) == 0) {
+                child[arrayIndex] = malloc(sizeof(struct childInfo));
+                child[arrayIndex]->command = malloc(500 * sizeof(char));
+                child[arrayIndex]->pid = malloc(500 * sizeof(char));
+                child[arrayIndex]->ppid = malloc(500 * sizeof(char));
+                char *childPID = strtok(NULL, " \n");
+                // child[arrayIndex]->pid = childPID;
+                char *cmd = strtok(NULL, " \n");
+                strcpy(child[arrayIndex]->command, cmd);
+                strcpy(child[arrayIndex]->pid, childPID);
+                strcpy(child[arrayIndex]->ppid, token);
+                printf(" the child array is ppid: %s, cmd: %s, pd: %s\n", child[arrayIndex]->ppid, child[arrayIndex]->command, child[arrayIndex]->pid);
+                arrayIndex++;
+                getChilds(childPID, child);
+            }
         }
+        counter++;
     }
 }
+
+
 
 void setLimit()
 {
@@ -108,22 +130,21 @@ void setLimit()
     }
 }
 
+
 void displayInformation(int counter, char *targetPID, int seconds)
 {
     char line[MAXLINE];
     FILE *fpInput;
+    // childtuple t1; 
     printf("a1mon [counter= %d, pid= %d, target_pid= %s, interval= %d sec]\n", counter, getpid(), targetPID, seconds);
     if ((fpInput = popen("ps -u $USER -o user,pid,ppid,state,start,cmd --sort start", "r")) == NULL)
     {
         err_sys("popen error");
     }
+   
     while (fgets(line, MAXLINE, fpInput))
     {
-
-        if (fputs(line, stdout) == EOF)
-        {
-            err_sys("error in fputs");
-        }
+        printf("%s", line);
     }
     if (pclose(fpInput) < 0)
     {

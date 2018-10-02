@@ -21,7 +21,9 @@ struct childInfo
     int pid;
     int ppid;
 };
-//typedef vector< tuple<string, string, string> > childtuple;
+
+// typedef vector< tuple<string, string, string> 
+
 
 void err_sys(const char *x);
 void setLimit();
@@ -38,7 +40,7 @@ int main(int argc, char const *argv[])
     int counter = 0;
     int seconds;
     char *targetPID;
-    // struct childInfo **childProcessArray = calloc(32, sizeof(struct childInfo *));
+    struct childInfo **childProcessArray = (struct childInfo **) calloc(32, sizeof(struct childInfo *));
 
     if (argc < 2 || argc > 3)
     {
@@ -55,9 +57,6 @@ int main(int argc, char const *argv[])
         seconds = 3;
     }
     setLimit();
-
-    // children_map = grabProcessChildren(targetPID);
-   // getChilds(targetPID);
     for (;;)
     {
         displayInformation(counter, targetPID, seconds);
@@ -136,29 +135,25 @@ void displayInformation(int counter, char *targetPID, int seconds)
     while (fgets(line, MAXLINE, fpInput))
     {
 
-        // if (fputs(line, stdout) == EOF)
-        // {
-        //     err_sys("error in fputs");
-        // }
-        //int pidPosition = 0;
-        //std::string tPid(targetPID);
+        
         std::string lineString(line);
-        // std::cout << lineString;
-        // printf("%s", targetPID);
         char *p = targetPID;
-
-        char *token = strtok(line, " ");
+        // std::cout << lineString;
+        char *token = strtok(line, " \n");
         int position = 0;
         while (token != NULL) {
             // parent process
-            if ((position == 1) && (strcmp(token, p) == 0)) {
-                
-                std::cout << token;
-                
+            if ((position == 1)) {
+                std::cout << token << endl;
                 
             }
-            
-        } 
+            // std::cout << token << endl;
+            position++;
+            token = strtok(NULL, " \n");
+      
+        
+        }
+
 
         // char *token = strtok(line, " ");
         // while (token != NULL) {
