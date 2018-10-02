@@ -2,7 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include <unistd.h>
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -22,7 +24,8 @@ void err_sys(const char *x);
 void setLimit();
 void displayInformation(int counter, char *targetPID, int seconds);
 void getChilds(char *targetPID, struct childInfo **childarray);
-
+bool monitorProcess(char * targetPID);
+void terminateALL(struct childInfo **childarray);
 int main(int argc, char const *argv[])
 {
     /* code */
@@ -33,7 +36,6 @@ int main(int argc, char const *argv[])
     int counter = 0;
     int seconds;
     char *targetPID;
-    struct childInfo **childProcessArray =  calloc(32, sizeof(struct childInfo *));
 
     if (argc < 2 || argc > 3)
     {
@@ -49,6 +51,8 @@ int main(int argc, char const *argv[])
     {
         seconds = 3;
     }
+    
+    struct childInfo **childProcessArray =  calloc(32, sizeof(struct childInfo *));
     setLimit();
     getChilds(targetPID,childProcessArray);
     for (;;)
@@ -63,6 +67,11 @@ int main(int argc, char const *argv[])
             x++;
         } 
         printf("]\n");
+        bool isKilled = monitorProcess(targetPID);
+        if (isKilled) {
+            terminateALL(childProcessArray);
+        }
+        printf(" the bool is %d\n",  isKilled);
         counter++;
         // std::cout << "List of monitored processes:" << endl;
         // std::cout << "[0:[]]" << endl;
@@ -108,12 +117,43 @@ void getChilds(char *targetPID, struct childInfo **child )
                 strcpy(child[arrayIndex]->command, cmd);
                 strcpy(child[arrayIndex]->pid, childPID);
                 strcpy(child[arrayIndex]->ppid, token);
-                printf(" the child array is ppid: %s, cmd: %s, pd: %s\n", child[arrayIndex]->ppid, child[arrayIndex]->command, child[arrayIndex]->pid);
                 arrayIndex++;
                 getChilds(childPID, child);
             }
         }
         counter++;
+    }
+    if (pclose(children) < 0)
+    {
+        err_sys("pclose error");
+    }
+    
+    
+}
+
+bool monitorProcess(char *targetPID) {
+    char command[MAXLINE];
+    char line[MAXLINE];
+    int x = 0;
+    strcpy(command, "ps ");
+    strcat(command, targetPID);
+    FILE *statusps;
+    if ((statusps = popen(command, "r")) == NULL)
+    {
+        err_sys("popen error");
+    }
+    while (fgets(line, sizeof(line), statusps)) {
+        x++;
+    }
+    if (pclose(statusps) < 0 ) {
+        err_sys("pclose error");
+    }
+
+    if (x > 1) {
+        return false;
+    }
+    else {
+        return true;
     }
 }
 
@@ -152,4 +192,23 @@ void displayInformation(int counter, char *targetPID, int seconds)
     }
 
     return;
+}
+
+
+void terminateALL(struct childInfo ** childarray) {
+    printf("\na1mon appears to have terminated, cleaning up\n");
+    int x = 0;
+    while (childarray[x] != NULL) {
+        pid_t pid = atoi(childarray[x]->pid);
+        printf("terminating [%s, %s]\n", childarray[x]->pid, childarray[x]->command);
+        kill(pid, SIGKILL);
+        free(childarray[x]->command);
+        free(childarray[x]->pid);
+        free(childarray[x]->ppid);
+        free(childarray[x]);
+        x++;
+    }
+    printf("exiting a1mon\n");
+    free(childarray);
+    exit(1);
 }
