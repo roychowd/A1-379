@@ -71,7 +71,6 @@ int main(int argc, char const *argv[])
         if (isKilled) {
             terminateALL(childProcessArray);
         }
-        printf(" the bool is %d\n",  isKilled);
         counter++;
         // std::cout << "List of monitored processes:" << endl;
         // std::cout << "[0:[]]" << endl;
