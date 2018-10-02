@@ -28,22 +28,7 @@ void suspendjob(struct jobInfo *job);
 void resumejob(struct jobInfo *job);
 void terminateJob(struct jobInfo *job);
 void pr_times(clock_t realTime, struct tms *start, struct tms *end);
-
-// void recordTimes()
-// {
-//     struct tms start, end;
-//     clock_t userCPUTime, systemCPUTime;
-//     //. Call function times() (see the table above) to record the user and CPU times for the current process
-//     //(and its terminated children).
-//     if (times(&start) == -1)
-//     {
-//         err_sys("times error");
-//     }
-//     printf(" times() yields: user CPU=%.2f; system CPU: %.2f\n", (double)start.tms_utime,
-//            (double)start.tms_stime);
-//     userCPUTime = start.tms_utime;
-//     systemCPUTime = start.tms_stime;
-// }
+void setLimit();
 
 int main()
 {
@@ -72,24 +57,11 @@ int main()
     struct jobInfo **jobArray = calloc(32, sizeof(struct jobInfo *));
     int jobIndex = 0;
 
-    /* obtain current limit */
-    if (getrlimit(RLIMIT_CPU, &rlim) < 0)
-    {
-        err_sys("getrlimit error");
-    }
 
-    /* set cpu limit of 10 minutes (1 * 60 * 10)  = 600 seconds */
+    // sets cpu limit to 10 minutes
+    setLimit();
 
-    // need to learn how to implement this!
-    rlim.rlim_cur = 600;
-    if (setrlimit(RLIMIT_CPU, &rlim) < 0)
-    {
-        err_sys("setrlimit error");
-    }
 
-    // need to somehow record times
-    // need to learn how to implement this
-    // recordTimes();
     if ((start = times(&tmsStart)) == -1)
         err_sys("times error");
 
@@ -165,9 +137,27 @@ int main()
                 if (jobArray[k]->isKilled == false)
                 {
                     terminateJob(jobArray[k]);
-                }
+                }void setLimit()
+{
+    // sets the cpu limit to 10 minutes
+    // put this in a header file to share with my other a1jobs
+    const struct rlimit maxLimit = {600, 600};
+    if (setrlimit(RLIMIT_CPU, &maxLimit) < 0)
+    {
+        err_sys("set limit error");
+    }
+}
 
-                k++;
+                kvoid setLimit()
+{
+    // sets the cpu limit to 10 minutes
+    // put this in a header file to share with my other a1jobs
+    const struct rlimit maxLimit = {600, 600};
+    if (setrlimit(RLIMIT_CPU, &maxLimit) < 0)
+    {
+        err_sys("set limit error");
+    }
+}
             }
             break;
         }
@@ -345,5 +335,20 @@ void run_pgm(char **args, struct jobInfo *job)
             strcat(job->command, args[x]);
             x++;
         }
+    }
+}
+
+
+
+
+// implementes the cpu limit 
+void setLimit()
+{
+    // sets the cpu limit to 10 minutes
+    // put this in a header file to share with my other a1jobs
+    const struct rlimit maxLimit = {600, 600};
+    if (setrlimit(RLIMIT_CPU, &maxLimit) < 0)
+    {
+        err_sys("set limit error");
     }
 }
