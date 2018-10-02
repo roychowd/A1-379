@@ -296,7 +296,6 @@ void run_pgm(char **args, struct jobInfo *job)
         job->pid = pid;
         job->isKilled = false;
         job->command = malloc(500 * sizeof(char));
-        if ()
         int x = 1;
         strcpy(job->command, args[0]);
         while (args[x] != NULL)
