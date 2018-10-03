@@ -146,6 +146,7 @@ int main()
     pr_times(end - start, &tmsStart, &tmsEnd);
 
     free(line);
+    free(arguments);
     int i = 0;
     while (jobArray[i] != NULL)
     {
@@ -307,7 +308,7 @@ void run_pgm(char **args, struct jobInfo *job)
     }
 }
 
-// Function used be the APUE book
+// Function used from the APUE BOOK [S/E 3]
 void setLimit()
 {
     // sets the cpu limit to 10 minutes
