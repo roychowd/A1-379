@@ -171,7 +171,6 @@ void err_sys(const char *x)
 /**
  * Function that takes in the line with the cmd run and parses it to grab the arguments
  * returns an array of strings (char **)
- * i used this website to help implement it: 
  */
 char **grabArgumentsWithoutRun(char *line)
 {
