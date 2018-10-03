@@ -9,8 +9,12 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
+
+
 #define MAXLINE 5000
 
+
+// struct that represents a child of the head process
 static int arrayIndex =0;
 struct childInfo
 {
@@ -19,13 +23,15 @@ struct childInfo
     char* ppid;
 };
 
-// typedef vector< tuple<string, string, string> 
+// all the functions that i used
 void err_sys(const char *x);
 void setLimit();
 void displayInformation(int counter, char *targetPID, int seconds);
 void getChilds(char *targetPID, struct childInfo **childarray);
 bool monitorProcess(char * targetPID);
 void terminateALL(struct childInfo **childarray);
+
+// --------------------------------------------------- START OF MAIN ---------------------------------// 
 int main(int argc, char const *argv[])
 {
     /* code */
@@ -57,45 +63,43 @@ int main(int argc, char const *argv[])
     getChilds(targetPID,childProcessArray);
     for (;;)
     {
-        displayInformation(counter, targetPID, seconds);
-        // getChilds(targetPID,childProcessArray);
+        displayInformation(counter, targetPID, seconds); // DISPLAYS INFORMATION VIA THE COMMAND
         printf("List of Monitored Processes");
         int x = 0;
         printf("[");
         while (childProcessArray[x]!=NULL) {
             printf("%d:[%s,%s], " , x, childProcessArray[x]->pid, childProcessArray[x]->command);
             x++;
-        } 
+        } // PRINTS OUT THE MONITORED CHILDS
         printf("]\n");
-        bool isKilled = monitorProcess(targetPID);
+        bool isKilled = monitorProcess(targetPID); // CHECKS IF THE PROCESS HAS BEEN KILLED
         if (isKilled) {
-            terminateALL(childProcessArray);
+            terminateALL(childProcessArray); // TERMINATES THE CHILDS
         }
         counter++;
-        // std::cout << "List of monitored processes:" << endl;
-        // std::cout << "[0:[]]" << endl;
         sleep(seconds);
     }
 
     return 0;
 }
 
+// --------------------------------------------------- END OF MAIN ------------------------------------------------ //
+
+// FUNCTION THAT EXITS WHEN AN ERROR OCCCURS
 void err_sys(const char *x)
 {
     perror(x);
     exit(1);
 }
 
+// FUNCTION THAT IS USED TO GET CHILDS AND PUT IN ARRAY OF STRUCTS 
 void getChilds(char *targetPID, struct childInfo **child )
 {
     char line[MAXLINE];
     char psCommand[MAXLINE];
     strcpy(psCommand, "ps -o ppid,pid,cmd --ppid ");
     strcat(psCommand, targetPID);
-
     FILE *children;
-    // if (arrayIndex > )
-
     if ((children = popen(psCommand, "r")) == NULL)
     {
         err_sys("popen error");
@@ -111,7 +115,6 @@ void getChilds(char *targetPID, struct childInfo **child )
                 child[arrayIndex]->pid = malloc(500 * sizeof(char));
                 child[arrayIndex]->ppid = malloc(500 * sizeof(char));
                 char *childPID = strtok(NULL, " \n");
-                // child[arrayIndex]->pid = childPID;
                 char *cmd = strtok(NULL, " \n");
                 strcpy(child[arrayIndex]->command, cmd);
                 strcpy(child[arrayIndex]->pid, childPID);
@@ -130,6 +133,9 @@ void getChilds(char *targetPID, struct childInfo **child )
     
 }
 
+
+
+// FUNCTION THAT MONITORS THE PROCESS- CHECKS TO SEE IF IT IS KILLED -- // 
 bool monitorProcess(char *targetPID) {
     char command[MAXLINE];
     char line[MAXLINE];
@@ -158,6 +164,7 @@ bool monitorProcess(char *targetPID) {
 
 
 
+// SET LIMIT FUNCTION TAKEN FROM ADVANCED PROGRAMMING IN UNIX ENVIRONMENT 3E // 
 void setLimit()
 {
     // sets the cpu limit to 10 minutes
@@ -170,6 +177,8 @@ void setLimit()
 }
 
 
+
+// PRINTS OUT THE REQURIED INFORMATION AS REFERENCED IN THE ASSIGNEMNET DESCRIPTION // 
 void displayInformation(int counter, char *targetPID, int seconds)
 {
     char line[MAXLINE];
@@ -194,8 +203,9 @@ void displayInformation(int counter, char *targetPID, int seconds)
 }
 
 
+// TERMINATES THE CHILDS !!!
 void terminateALL(struct childInfo ** childarray) {
-    printf("\na1mon appears to have terminated, cleaning up\n");
+    printf("\na1mon: target appears to have terminated, cleaning up\n");
     int x = 0;
     while (childarray[x] != NULL) {
         pid_t pid = atoi(childarray[x]->pid);

@@ -11,6 +11,8 @@
 #include <signal.h>
 #include <stdbool.h>
 
+
+// a struct representing a job
 struct jobInfo
 {
     char *command;
@@ -19,6 +21,8 @@ struct jobInfo
     bool isKilled;
 };
 
+
+// functions that i need
 void err_sys(const char *x);
 char **grabArgumentsWithoutRun(char *line);
 void list_all_jobs();
@@ -30,9 +34,12 @@ void terminateJob(struct jobInfo *job);
 void pr_times(clock_t realTime, struct tms *start, struct tms *end);
 void setLimit();
 
+
+// --------------------------------------------------MAIN PROGRAM -------------------------------------------- // 
 int main()
 {
     /* code */
+
     // following is from APUE [SR 3/E]
     struct tms tmsStart, tmsEnd;
     clock_t start, end;
@@ -42,21 +49,18 @@ int main()
     size_t buffer = 0;
 
     // initialize a char pointer and a array of pointers to strings
-    char *line = NULL;
+    char *line = NULL; // used in the getline function 
     char **arguments = NULL;
 
     /** initialize an array of struct pointers to jobs
      */
 
     // initialaize a jobarray thats a array of struct objects
-    struct jobInfo **jobArray = calloc(32, sizeof(struct jobInfo *));
+    struct jobInfo **jobArray = calloc(32, sizeof(struct jobInfo *)); 
     int jobIndex = 0;
 
     setLimit();
 
-    // need to somehow record times
-    // need to learn how to implement this
-    // recordTimes();
     if ((start = times(&tmsStart)) == -1)
         err_sys("times error");
 
@@ -67,21 +71,23 @@ int main()
 
     while (1)
     {
-        //ANCHOR While
+        // grab user function 
         printf("a1jobs[%d]: ", parentPid);
         getline(&line, &buffer, stdin);
+
+        // if statement to compare user input with assignment specifications 
         if (strcmp(line, "quit\n") == 0)
         {
-            break;
+            break; // if quit we exit the main loop without terminating 
         }
         else if (strstr(line, "run") != NULL)
         {
-            arguments = grabArgumentsWithoutRun(line);
+            arguments = grabArgumentsWithoutRun(line); // functions that grabs arguments without the run command
             if (jobIndex < 32)
             {
-                jobArray[jobIndex] = malloc(sizeof(struct jobInfo));
+                jobArray[jobIndex] = malloc(sizeof(struct jobInfo)); // allocate memory for a struct
                 jobArray[jobIndex]->index = jobIndex;
-                run_pgm(arguments, jobArray[jobIndex]);
+                run_pgm(arguments, jobArray[jobIndex]); // runs the program
                 jobIndex++;
             }
         }
@@ -97,19 +103,19 @@ int main()
         }
         else if (strstr(line, "suspend"))
         {
-            int suspendIndex = grabIndex(line);
+            int suspendIndex = grabIndex(line); 
             if (jobArray[suspendIndex] != NULL)
             {
 
-                suspendjob(jobArray[suspendIndex]);
+                suspendjob(jobArray[suspendIndex]); // suspends the job
             }
         }
         else if (strstr(line, "resume"))
         {
-            int resumeIndex = grabIndex(line);
+            int resumeIndex = grabIndex(line); // grabs the index
             if (jobArray[resumeIndex] != NULL)
             {
-                resumejob(jobArray[resumeIndex]);
+                resumejob(jobArray[resumeIndex]); // resumes the job 
             }
         }
         else if (strstr(line, "terminate"))
@@ -117,7 +123,7 @@ int main()
             int terminateIndex = grabIndex(line);
             if (jobArray[terminateIndex] != NULL)
             {
-                terminateJob(jobArray[terminateIndex]);
+                terminateJob(jobArray[terminateIndex]); // terminates the job
             }
         }
         else if (strcmp(line, "exit\n") == 0)
@@ -142,11 +148,12 @@ int main()
     }
 
     // implementing APUE code;
-
     pr_times(end - start, &tmsStart, &tmsEnd);
 
-    free(line);
-    free(arguments);
+
+    // memory deallocation // 
+    free(line); 
+    free(arguments); 
     int i = 0;
     while (jobArray[i] != NULL)
     {
@@ -154,13 +161,16 @@ int main()
         free(jobArray[i]);
         i++;
     }
-    free(arguments);
     free(jobArray);
     return 0;
 }
 
+// ------------------------------------------------END OF MAIN ---------------------------------------------//
+
+
+
 /**
- * A function that eases repettive code for errors
+ * A function that is called when errors occur
  */
 void err_sys(const char *x)
 {
@@ -205,8 +215,11 @@ char **grabArgumentsWithoutRun(char *line)
     return args;
 }
 
+
+
+
 /**
- * The following function is from APUE 3/E 
+ * The following function is from APUE 3/E fig. 8.31
  * Used to print times of processes 
  */
 void pr_times(clock_t realTime, struct tms *start, struct tms *end)
@@ -228,6 +241,8 @@ void pr_times(clock_t realTime, struct tms *start, struct tms *end)
     printf("child sys:\t%7.2f\n", (end->tms_cstime - start->tms_cstime) / (double)clockTick);
 }
 
+
+
 /**
  * Function that executes if the person types a command that uses list
  */
@@ -248,18 +263,23 @@ int grabIndex(char *line)
     return index;
 }
 
+
+// function used to suspend jobs
 void suspendjob(struct jobInfo *job)
 {
     kill(job->pid, SIGSTOP);
     return;
 }
 
+
+// function used to resume jobs
 void resumejob(struct jobInfo *job)
 {
     kill(job->pid, SIGCONT);
     return;
 }
 
+// function used to resume jobs
 void terminateJob(struct jobInfo *job)
 {
     kill(job->pid, SIGKILL);
